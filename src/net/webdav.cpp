@@ -73,6 +73,18 @@ std::string trimSlashes(std::string value) {
     while (!value.empty() && value.back() == '/') value.pop_back();
     return value;
 }
+
+std::string profileText(const nlohmann::json& json, const std::string& fallback) {
+    if (!json.is_object() || !json.contains("text")) return fallback;
+
+    const auto& value = json.at("text");
+    if (value.is_string()) return value.get<std::string>();
+    if (value.is_null()) return {};
+
+    // Some clients encode a numeric clipboard value as a JSON number. Preserve
+    // its JSON spelling so the clipboard receives the original text content.
+    return value.dump();
+}
 }
 
 std::string textHash(const std::string& text) {
@@ -133,8 +145,7 @@ std::optional<Profile> WebDavClient::pull() {
     Profile profile;
     try {
         auto json = nlohmann::json::parse(response.body);
-        if (json.is_object() && json.contains("text")) profile.text = json.value("text", "");
-        else profile.text = response.body;
+        profile.text = profileText(json, response.body);
     } catch (...) { profile.text = response.body; }
     profile.hash = textHash(profile.text); profile.etag = etag_;
     return profile;
