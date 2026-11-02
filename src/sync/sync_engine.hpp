@@ -1,10 +1,11 @@
 #pragma once
 
 #include <atomic>
+#include <condition_variable>
 #include <mutex>
 #include <thread>
 
-#include "../net/webdav.hpp"
+#include "../net/sync_clipboard.hpp"
 
 class SyncEngine {
 public:
@@ -16,11 +17,12 @@ public:
     void stop();
 
 private:
-    WebDavClient client_;
+    SyncClipboardClient client_;
     long pollIntervalMs_;
     std::thread poller_;
     std::atomic<bool> stopping_{false};
     std::string lastTextHash_;
-    std::string suppressedHash_;
     std::mutex stateMutex_;
+    std::mutex waitMutex_;
+    std::condition_variable wake_;
 };

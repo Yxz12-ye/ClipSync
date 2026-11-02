@@ -68,9 +68,9 @@ int App::run(int argc, char* argv[]) {
     try {
         auto config = AppConfig::load(configPath);
         SyncEngine engine(config);
-        std::string error;
-        if (!engine.startupSync()) Logger::warning("startup sync failed");
-        if (once) return 0;
+        const bool synced = engine.startupSync();
+        if (!synced) Logger::warning("startup sync failed");
+        if (once) return synced ? 0 : 1;
 #ifdef _WIN32
         if (!hidden && !SetConsoleCtrlHandler(consoleHandler, TRUE)) {
             Logger::warning("could not install console handler");

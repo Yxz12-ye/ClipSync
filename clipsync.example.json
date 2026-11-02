@@ -1,6 +1,5 @@
 {
-  "davUrl": "http://IP:PORT/dav/",
-  "remotePath": "path",
+  "serverUrl": "https://sync.example.com/",
   "username": "username",
   "password": "password",
   "pollIntervalMs": 3000

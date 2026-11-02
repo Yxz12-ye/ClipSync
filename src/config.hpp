@@ -3,8 +3,7 @@
 #include <string>
 
 struct AppConfig {
-    std::string davUrl;
-    std::string remotePath;
+    std::string serverUrl;
     std::string username;
     std::string password;
     long pollIntervalMs = 3000;

@@ -33,3 +33,8 @@ Thumbs.db
 # Debug files
 *.pdb
 *.ilk
+
+# Local credentials
+clipsync.json
+
+xipk_work/

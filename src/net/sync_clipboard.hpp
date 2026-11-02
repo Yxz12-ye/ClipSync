@@ -12,20 +12,18 @@ struct Profile {
     std::string etag;
 };
 
-class WebDavClient {
+class SyncClipboardClient {
 public:
-    explicit WebDavClient(AppConfig config);
+    explicit SyncClipboardClient(AppConfig config);
     bool push(const std::string& text);
     std::optional<Profile> pull();
-    bool testConnection(std::string& error);
+    void resetRevision();
 
 private:
     AppConfig config_;
     std::string etag_;
     mutable std::mutex mutex_;
     std::string fileUrl() const;
-    std::string directoryUrl() const;
-    bool makeDirectories();
 };
 
 std::string textHash(const std::string& text);

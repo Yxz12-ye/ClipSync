@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(ClipSync
     VERSION 0.1.0
-    DESCRIPTION "Windows WebDAV clipboard synchronization service"
+    DESCRIPTION "Windows SyncClipboard synchronization service"
     LANGUAGES CXX
 )
 
@@ -28,6 +28,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # ============================================================================
 option(ENABLE_WARNINGS "Enable compiler warnings" ON)
 option(ENABLE_TESTING "Enable testing" OFF)
+option(ENABLE_PROTOCOL_TESTING "Enable local SyncClipboard integration tests (Python required)" OFF)
 option(CMAKE_USE_VCPKG "Use vcpkg package manager" ON)
 
 # ============================================================================
@@ -63,7 +64,7 @@ set(SOURCES
     src/utils/logger.cpp
     src/utils/string_utils.cpp
     src/config.cpp
-    src/net/webdav.cpp
+    src/net/sync_clipboard.cpp
     src/platform/clipboard.cpp
     src/sync/sync_engine.cpp
 )
@@ -73,7 +74,7 @@ set(HEADERS
     src/utils/logger.hpp
     src/utils/string_utils.hpp
     src/config.hpp
-    src/net/webdav.hpp
+    src/net/sync_clipboard.hpp
     src/platform/clipboard.hpp
     src/sync/sync_engine.hpp
 )
@@ -93,7 +94,7 @@ if(ENABLE_WARNINGS)
 endif()
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE user32 advapi32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE user32 advapi32 bcrypt)
     if(CMAKE_USE_VCPKG)
         target_link_libraries(${PROJECT_NAME} PRIVATE CURL::libcurl nlohmann_json::nlohmann_json)
     endif()
@@ -127,6 +128,25 @@ if(ENABLE_TESTING)
     FetchContent_MakeAvailable(googletest)
 
     add_subdirectory(tests)
+endif()
+
+if(ENABLE_PROTOCOL_TESTING)
+    enable_testing()
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_executable(sync_protocol_probe
+        tests/sync_protocol_probe.cpp
+        src/config.cpp
+        src/net/sync_clipboard.cpp
+        src/sync/sync_engine.cpp
+        src/utils/logger.cpp
+    )
+    target_include_directories(sync_protocol_probe PRIVATE src)
+    target_link_libraries(sync_protocol_probe PRIVATE CURL::libcurl nlohmann_json::nlohmann_json bcrypt)
+    if(ENABLE_WARNINGS)
+        target_link_libraries(sync_protocol_probe PRIVATE project_warnings)
+    endif()
+    add_test(NAME sync_protocol COMMAND Python3::Interpreter
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/sync_protocol_test.py $<TARGET_FILE:sync_protocol_probe>)
 endif()
 
 # ============================================================================

@@ -11,12 +11,18 @@ AppConfig AppConfig::load(const std::string& path) {
     nlohmann::json json;
     input >> json;
     AppConfig config;
-    config.davUrl = json.value("davUrl", "");
-    config.remotePath = json.value("remotePath", "");
+    config.serverUrl = json.value("serverUrl", "");
+    if (config.serverUrl.empty() && json.contains("davUrl")) {
+        throw std::runtime_error("legacy WebDAV config: replace davUrl/remotePath with serverUrl matching Zhongzhou Goose custom server address");
+    }
     config.username = json.value("username", "");
     config.password = json.value("password", "");
     config.pollIntervalMs = json.value("pollIntervalMs", 3000L);
     if (config.pollIntervalMs < 250) config.pollIntervalMs = 250;
-    if (config.davUrl.empty()) throw std::runtime_error("davUrl is required");
+    if (config.serverUrl.empty()) throw std::runtime_error("serverUrl is required");
+    if (config.serverUrl.rfind("http://", 0) != 0 && config.serverUrl.rfind("https://", 0) != 0)
+        throw std::runtime_error("serverUrl must start with http:// or https://");
+    if (config.serverUrl.find_first_of("?#\r\n") != std::string::npos)
+        throw std::runtime_error("serverUrl must not contain a query, fragment or newline");
     return config;
 }
